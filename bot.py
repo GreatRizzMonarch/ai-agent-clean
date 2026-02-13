@@ -19,16 +19,20 @@ CREATE TABLE IF NOT EXISTS alerts (
 """)
 conn.commit()
 
+
 def get_price(symbol: str):
     try:
         symbol = symbol.upper()
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS"
-        
-        print("Fetching:", url)
 
-        response = requests.get(url, timeout=10)
-        print("Status:", response.status_code)
-        print("Response:", response.text[:300])
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        response = requests.get(url, headers=headers, timeout=10)
+
+        if response.status_code != 200:
+            return None
 
         data = response.json()
         result = data.get("chart", {}).get("result")
@@ -37,6 +41,7 @@ def get_price(symbol: str):
             return None
 
         return result[0]["meta"]["regularMarketPrice"]
+
     except Exception as e:
         print("Price fetch error:", e)
         return None
