@@ -54,7 +54,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Usage: /price SBIN")
+        await update.message.reply_text("Usage: /price SYMBOL")
         return
 
     symbol = context.args[0].upper()
@@ -64,7 +64,50 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Invalid stock symbol ❌")
     else:
         await update.message.reply_text(f"{symbol} price: ₹{current_price}")
+async def alert(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) != 2:
+        await update.message.reply_text("Usage: /alert SUZLON 50")
+        return
 
+    symbol = context.args[0].upper()
+
+    try:
+        target_price = float(context.args[1])
+    except ValueError:
+        await update.message.reply_text("Target price must be a number.")
+        return
+
+    chat_id = update.effective_chat.id
+
+    cursor.execute(
+        "INSERT INTO alerts (chat_id, symbol, target_price) VALUES (?, ?, ?)",
+        (chat_id, symbol, target_price),
+    )
+    conn.commit()
+
+    await update.message.reply_text(
+        f"Alert set for {symbol} at ₹{target_price}"
+    )        
+
+async def check_alerts(context: ContextTypes.DEFAULT_TYPE):
+    cursor.execute("SELECT id, chat_id, symbol, target_price FROM alerts")
+    rows = cursor.fetchall()
+
+    for alert_id, chat_id, symbol, target_price in rows:
+        current_price = get_price(symbol)
+
+        if current_price is None:
+            continue
+
+        if current_price >= target_price:
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=f"🚨 {symbol} hit ₹{target_price}!\nCurrent: ₹{current_price}"
+            )
+
+            cursor.execute("DELETE FROM alerts WHERE id = ?", (alert_id,))
+            conn.commit()
+            
 def main():
     if not TOKEN:
         raise ValueError("BOT_TOKEN is not set")
@@ -74,6 +117,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("price", price))
+    app.add_handler(CommandHandler("alert", alert))
 
     print("Bot running...")
     app.run_polling()
