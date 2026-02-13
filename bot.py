@@ -108,6 +108,12 @@ async def check_alerts(context: ContextTypes.DEFAULT_TYPE):
             cursor.execute("DELETE FROM alerts WHERE id = ?", (alert_id,))
             conn.commit()
 
+async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import pandas as pd
+    import numpy as np
+
+    await update.message.reply_text("Pandas & Numpy working ✅")            
+
 def main():
     if not TOKEN:
         raise ValueError("BOT_TOKEN is not set")
@@ -118,6 +124,7 @@ def main():
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("price", price))
     app.add_handler(CommandHandler("alert", alert))
+    app.add_handler(CommandHandler("test", test))
 
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
