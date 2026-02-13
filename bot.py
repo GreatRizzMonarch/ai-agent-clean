@@ -21,15 +21,22 @@ conn.commit()
 
 def get_price(symbol: str):
     try:
+        symbol = symbol.upper()
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS"
-        response = requests.get(url, timeout=10).json()
+        
+        print("Fetching:", url)
 
-        result = response.get("chart", {}).get("result")
+        response = requests.get(url, timeout=10)
+        print("Status:", response.status_code)
+        print("Response:", response.text[:300])
+
+        data = response.json()
+        result = data.get("chart", {}).get("result")
+
         if not result:
             return None
 
         return result[0]["meta"]["regularMarketPrice"]
-
     except Exception as e:
         print("Price fetch error:", e)
         return None
