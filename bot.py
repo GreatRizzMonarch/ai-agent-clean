@@ -107,7 +107,7 @@ async def check_alerts(context: ContextTypes.DEFAULT_TYPE):
 
             cursor.execute("DELETE FROM alerts WHERE id = ?", (alert_id,))
             conn.commit()
-            
+
 def main():
     if not TOKEN:
         raise ValueError("BOT_TOKEN is not set")
@@ -119,6 +119,8 @@ def main():
     app.add_handler(CommandHandler("price", price))
     app.add_handler(CommandHandler("alert", alert))
 
+    # Schedule the alert checking function to run every 1 minutes
+    app.job_queue.run_repeating(check_alerts, interval=60, first=10)
     print("Bot running...")
     app.run_polling()
 
