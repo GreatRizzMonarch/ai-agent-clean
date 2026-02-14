@@ -52,6 +52,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Pong 🏓")
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("YOU ARE GENIUS 🚀")
+
 async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("Usage: /price SYMBOL")
@@ -122,6 +125,7 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("ping", ping))
+    app.add_handler(CommandHandler("genius", genius))
     app.add_handler(CommandHandler("price", price))
     app.add_handler(CommandHandler("alert", alert))
     app.add_handler(CommandHandler("test", test))
