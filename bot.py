@@ -52,7 +52,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Pong 🏓")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def genius(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("YOU ARE GENIUS 🚀")
 
 async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
