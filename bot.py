@@ -1,4 +1,5 @@
 import os
+from turtle import pd
 import requests
 import sqlite3
 from telegram import Update
@@ -45,15 +46,35 @@ def get_price(symbol: str):
     except Exception as e:
         print("Price fetch error:", e)
         return None
+    
+def calculate_sma(symbol: str, period: int = 20):
+    try:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=3mo&interval=1d"
+        response = requests.get(url, timeout=10)
+        data = response.json()
+
+        result = data.get("chart", {}).get("result")
+        if not result:
+            return None
+
+        closes = result[0]["indicators"]["quote"][0]["close"]
+        df = pd.DataFrame(closes, columns=["close"])
+        df.dropna(inplace=True)
+
+        df["SMA"] = df["close"].rolling(window=period).mean()
+
+        return round(df["SMA"].iloc[-1], 2)
+
+    except Exception as e:
+        print("SMA error:", e)
+        return None
+    
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bot is alive 🚀")
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Pong 🏓")
-
-async def genius(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.message.reply_text("YOU ARE GENIUS 🚀")
 
 async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
@@ -115,7 +136,20 @@ async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
     import pandas as pd
     import numpy as np
 
-    await update.message.reply_text("Pandas & Numpy working ✅")            
+    await update.message.reply_text("Pandas & Numpy working ✅")
+
+async def sma(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Usage: /sma SBIN")
+        return
+
+    symbol = context.args[0].upper()
+    value = calculate_sma(symbol)
+
+    if value is None:
+        await update.message.reply_text("Could not calculate SMA ❌")
+    else:
+        await update.message.reply_text(f"{symbol} 20-day SMA: ₹{value}")
 
 def main():
     if not TOKEN:
@@ -129,6 +163,7 @@ def main():
     app.add_handler(CommandHandler("price", price))
     app.add_handler(CommandHandler("alert", alert))
     app.add_handler(CommandHandler("test", test))
+    app.add_handler(CommandHandler("sma", sma))
 
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
