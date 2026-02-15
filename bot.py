@@ -48,23 +48,28 @@ def get_price(symbol: str):
         print("Price fetch error:", e)
         return None
     
-def calculate_sma(symbol: str, period: int = 20):
+import pandas as pd
+
+def calculate_sma(symbol, period=20):
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=3mo&interval=1d"
-        response = requests.get(url, timeout=10)
-        data = response.json()
+        response = requests.get(url, timeout=10).json()
 
-        result = data.get("chart", {}).get("result")
+        result = response.get("chart", {}).get("result")
         if not result:
             return None
 
         closes = result[0]["indicators"]["quote"][0]["close"]
+
         df = pd.DataFrame(closes, columns=["close"])
         df.dropna(inplace=True)
 
-        df["SMA"] = df["close"].rolling(window=period).mean()
+        if len(df) < period:
+            return None
 
-        return round(df["SMA"].iloc[-1], 2)
+        df["sma"] = df["close"].rolling(window=period).mean()
+
+        return round(df["sma"].iloc[-1], 2)
 
     except Exception as e:
         print("SMA error:", e)
