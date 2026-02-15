@@ -1,5 +1,6 @@
 import os
 from turtle import pd
+from urllib import response
 import requests
 import sqlite3
 import pandas as pd
@@ -52,24 +53,55 @@ import pandas as pd
 
 def calculate_sma(symbol, period=20):
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=3mo&interval=1d"
-        response = requests.get(url, timeout=10).json()
+        symbol = symbol.upper()
 
-        result = response.get("chart", {}).get("result")
-        if not result:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=3mo&interval=1d"
+        response = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=10
+        )
+
+        if response.status_code != 200:
+            print("HTTP Error:", response.status_code)
+            print("Response:", response.text[:200])
             return None
 
-        closes = result[0]["indicators"]["quote"][0]["close"]
+        try:
+            data = response.json()
+        except Exception as e:
+            print("JSON decode error:", e)
+            print("Raw response:", response.text[:200])
+            return None
+
+        result = data.get("chart", {}).get("result")
+        if not result:
+            print("No result in API")
+            return None
+
+        indicators = result[0].get("indicators", {})
+        quotes = indicators.get("quote", [{}])[0]
+        closes = quotes.get("close")
+
+        if not closes:
+            print("No close data")
+            return None
 
         df = pd.DataFrame(closes, columns=["close"])
         df.dropna(inplace=True)
 
         if len(df) < period:
+            print("Not enough data:", len(df))
             return None
 
         df["sma"] = df["close"].rolling(window=period).mean()
 
-        return round(df["sma"].iloc[-1], 2)
+        sma_value = df["sma"].iloc[-1]
+
+        if pd.isna(sma_value):
+            return None
+
+        return round(float(sma_value), 2)
 
     except Exception as e:
         print("SMA error:", e)
