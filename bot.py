@@ -112,27 +112,37 @@ def calculate_ema(symbol, period=20):
         symbol = symbol.upper()
 
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=3mo&interval=1d"
-        response = requests.get(url, timeout=10)
-        data = response.json()
+
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        response = requests.get(url, headers=headers, timeout=10)
+
+        if response.status_code != 200:
+            print("Bad status:", response.status_code)
+            return None
+
+        try:
+            data = response.json()
+        except Exception as e:
+            print("JSON error:", e)
+            return None
 
         result = data.get("chart", {}).get("result")
         if not result:
             print("No result in API")
             return None
 
-        indicators = result[0].get("indicators", {})
-        quotes = indicators.get("quote", [{}])[0]
-        closes = quotes.get("close")
+        closes = result[0]["indicators"]["quote"][0]["close"]
 
         if not closes:
-            print("No close data")
             return None
 
         df = pd.DataFrame(closes, columns=["close"])
         df.dropna(inplace=True)
 
         if len(df) < period:
-            print("Not enough data")
             return None
 
         df["ema"] = df["close"].ewm(span=period, adjust=False).mean()
