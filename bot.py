@@ -159,7 +159,6 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("ping", ping))
-    app.add_handler(CommandHandler("genius", genius))
     app.add_handler(CommandHandler("price", price))
     app.add_handler(CommandHandler("alert", alert))
     app.add_handler(CommandHandler("test", test))
