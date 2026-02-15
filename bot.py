@@ -106,6 +106,47 @@ def calculate_sma(symbol, period=20):
     except Exception as e:
         print("SMA error:", e)
         return None
+
+def calculate_ema(symbol, period=20):
+    try:
+        symbol = symbol.upper()
+
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=3mo&interval=1d"
+        response = requests.get(url, timeout=10)
+        data = response.json()
+
+        result = data.get("chart", {}).get("result")
+        if not result:
+            print("No result in API")
+            return None
+
+        indicators = result[0].get("indicators", {})
+        quotes = indicators.get("quote", [{}])[0]
+        closes = quotes.get("close")
+
+        if not closes:
+            print("No close data")
+            return None
+
+        df = pd.DataFrame(closes, columns=["close"])
+        df.dropna(inplace=True)
+
+        if len(df) < period:
+            print("Not enough data")
+            return None
+
+        df["ema"] = df["close"].ewm(span=period, adjust=False).mean()
+
+        ema_value = df["ema"].iloc[-1]
+
+        if pd.isna(ema_value):
+            return None
+
+        return round(ema_value, 2)
+
+    except Exception as e:
+        print("EMA error:", e)
+        return None        
     
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -189,6 +230,19 @@ async def sma(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(f"{symbol} 20-day SMA: ₹{value}")
 
+async def ema(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Usage: /ema SBIN")
+        return
+
+    symbol = context.args[0]
+    ema_value = calculate_ema(symbol)
+
+    if ema_value is None:
+        await update.message.reply_text("Could not calculate EMA ❌")
+    else:
+        await update.message.reply_text(f"{symbol.upper()} 20-day EMA: ₹{ema_value}")        
+
 def main():
     if not TOKEN:
         raise ValueError("BOT_TOKEN is not set")
@@ -201,6 +255,7 @@ def main():
     app.add_handler(CommandHandler("alert", alert))
     app.add_handler(CommandHandler("test", test))
     app.add_handler(CommandHandler("sma", sma))
+    app.add_handler(CommandHandler("ema", ema))
 
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
