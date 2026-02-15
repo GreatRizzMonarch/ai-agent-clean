@@ -2,6 +2,7 @@ import os
 from turtle import pd
 import requests
 import sqlite3
+import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
