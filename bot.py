@@ -111,7 +111,7 @@ def calculate_ema(symbol, period=20):
     try:
         symbol = symbol.upper()
 
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=3mo&interval=1d"
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=2y&interval=1d"
 
         headers = {
             "User-Agent": "Mozilla/5.0"
@@ -177,7 +177,49 @@ def identify_trend(symbol):
             return "Sideways / Consolidating 🔄"
 
     except:
-        return None           
+        return None  
+
+def calculate_rsi(symbol, period=14):
+    try:
+        symbol = symbol.upper()
+
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=6mo&interval=1d"
+        response = requests.get(url, timeout=10)
+        data = response.json()
+
+        result = data.get("chart", {}).get("result")
+        if not result:
+            return None
+
+        closes = result[0]["indicators"]["quote"][0]["close"]
+
+        df = pd.DataFrame(closes, columns=["close"])
+        df.dropna(inplace=True)
+
+        if len(df) < period:
+            return None
+
+        delta = df["close"].diff()
+
+        gain = delta.clip(lower=0)
+        loss = -delta.clip(upper=0)
+
+        avg_gain = gain.rolling(window=period).mean()
+        avg_loss = loss.rolling(window=period).mean()
+
+        rs = avg_gain / avg_loss
+        df["rsi"] = 100 - (100 / (1 + rs))
+
+        rsi_value = df["rsi"].iloc[-1]
+
+        if pd.isna(rsi_value):
+            return None
+
+        return round(rsi_value, 2)
+
+    except Exception as e:
+        print("RSI error:", e)
+        return None             
     
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -288,7 +330,21 @@ async def trend(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if trend_status is None:
         await update.message.reply_text("Could not identify trend ❌")
     else:
-        await update.message.reply_text(f"{symbol.upper()} Trend: {trend_status}")                
+        await update.message.reply_text(f"{symbol.upper()} Trend: {trend_status}") 
+
+async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Usage: /rsi SBIN")
+        return
+
+    symbol = context.args[0]
+
+    rsi_value = calculate_rsi(symbol)
+
+    if rsi_value is None:
+        await update.message.reply_text("Could not calculate RSI ❌")
+    else:
+        await update.message.reply_text(f"{symbol.upper()} 14-day RSI: {rsi_value}")                       
 
 def main():
     if not TOKEN:
@@ -304,6 +360,7 @@ def main():
     app.add_handler(CommandHandler("sma", sma))
     app.add_handler(CommandHandler("ema", ema))
     app.add_handler(CommandHandler("trend", trend))
+    app.add_handler(CommandHandler("rsi", rsi))
 
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
