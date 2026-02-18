@@ -163,18 +163,22 @@ def identify_trend(symbol):
         ema20 = calculate_ema(symbol, 20)
         ema50 = calculate_ema(symbol, 50)
         current_price = get_price(symbol)
+        rsi_value = calculate_rsi(symbol)
 
         if None in (ema20, ema50, current_price):
             return None
 
-        if current_price > ema20 > ema50:
-            return "Bullish Uptrend 📈"
+        if ema20 > ema50 and rsi_value > 55:
+           trend = "Strong Bullish Uptrend 📈🔥"
 
-        elif current_price < ema20 < ema50:
-            return "Bearish Downtrend 📉"
+        elif ema20 < ema50 and rsi_value < 45:
+           trend = "Strong Bearish Downtrend 📉🔥"
+
+        elif 45 <= rsi_value <= 55:
+           trend = "Sideways / Low Momentum 🔄"
 
         else:
-            return "Sideways / Consolidating 🔄"
+          trend = "Weak / Transition Phase ⚠️"
 
     except:
         return None  
