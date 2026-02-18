@@ -156,7 +156,28 @@ def calculate_ema(symbol, period=20):
 
     except Exception as e:
         print("EMA error:", e)
-        return None        
+        return None 
+
+def identify_trend(symbol):
+    try:
+        ema20 = calculate_ema(symbol, 20)
+        ema50 = calculate_ema(symbol, 50)
+        current_price = get_price(symbol)
+
+        if None in (ema20, ema50, current_price):
+            return None
+
+        if current_price > ema20 > ema50:
+            return "Bullish Uptrend 📈"
+
+        elif current_price < ema20 < ema50:
+            return "Bearish Downtrend 📉"
+
+        else:
+            return "Sideways / Consolidating 🔄"
+
+    except:
+        return None           
     
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -241,17 +262,33 @@ async def sma(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"{symbol} 20-day SMA: ₹{value}")
 
 async def ema(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("Usage: /ema SBIN")
+    if len(context.args) < 1:
+        await update.message.reply_text("Usage: /ema SBIN 20")
         return
 
     symbol = context.args[0]
-    ema_value = calculate_ema(symbol)
+    period = int(context.args[1]) if len(context.args) > 1 else 20
+
+    ema_value = calculate_ema(symbol, period)
 
     if ema_value is None:
         await update.message.reply_text("Could not calculate EMA ❌")
     else:
-        await update.message.reply_text(f"{symbol.upper()} 20-day EMA: ₹{ema_value}")        
+        await update.message.reply_text(f"{symbol.upper()} {period}-day EMA: ₹{ema_value}")
+
+async def trend(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Usage: /trend SBIN")
+        return
+
+    symbol = context.args[0]
+
+    trend_status = identify_trend(symbol)
+
+    if trend_status is None:
+        await update.message.reply_text("Could not identify trend ❌")
+    else:
+        await update.message.reply_text(f"{symbol.upper()} Trend: {trend_status}")                
 
 def main():
     if not TOKEN:
@@ -266,6 +303,7 @@ def main():
     app.add_handler(CommandHandler("test", test))
     app.add_handler(CommandHandler("sma", sma))
     app.add_handler(CommandHandler("ema", ema))
+    app.add_handler(CommandHandler("trend", trend))
 
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
