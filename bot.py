@@ -188,8 +188,22 @@ def calculate_rsi(symbol, period=14):
         symbol = symbol.upper()
 
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=6mo&interval=1d"
-        response = requests.get(url, timeout=10)
-        data = response.json()
+        response = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=10
+        )
+
+        if response.status_code != 200:
+            return f"HTTP Error {response.status_code}"
+
+        if not response.text:
+            return "Empty response from API"
+
+        try:
+            data = response.json()
+        except Exception as e:
+            return f"JSON Error: {str(e)}"
 
         result = data.get("chart", {}).get("result")
         if not result:
