@@ -3,6 +3,7 @@ from turtle import pd
 from urllib import response
 import requests
 import sqlite3
+import time
 import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -22,6 +23,25 @@ CREATE TABLE IF NOT EXISTS alerts (
 """)
 conn.commit()
 
+def fetch_data(url, retries=3):
+    for _ in range(retries):
+        try:
+            response = requests.get(
+                url,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=10
+            )
+
+            if response.status_code != 200:
+                time.sleep(1)
+                continue
+
+            return response.json()
+
+        except Exception:
+            time.sleep(1)
+
+    return None
 
 def get_price(symbol: str):
     try:
@@ -188,22 +208,9 @@ def calculate_rsi(symbol, period=14):
         symbol = symbol.upper()
 
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=6mo&interval=1d"
-        response = requests.get(
-            url,
-            headers={"User-Agent": "Mozilla/5.0"},
-            timeout=10
-        )
-
-        if response.status_code != 200:
-            return f"HTTP Error {response.status_code}"
-
-        if not response.text:
-            return "Empty response from API"
-
-        try:
-            data = response.json()
-        except Exception as e:
-            return f"JSON Error: {str(e)}"
+        data = fetch_data(url)
+        if not data:
+            return None
 
         result = data.get("chart", {}).get("result")
         if not result:
