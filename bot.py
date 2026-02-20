@@ -344,31 +344,40 @@ async def ema(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"{symbol.upper()} {period}-day EMA: ₹{ema_value}")
 
 async def trend(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("Usage: /trend SBIN")
-        return
 
-    symbol = context.args[0]
+    try:
+        if not context.args:
+            await update.message.reply_text("Usage: /trend SBIN")
+            return
 
-    trend = identify_trend(symbol)
+        symbol = context.args[0].upper()
 
-    rsi = calculate_rsi(symbol)
+        trend = identify_trend(symbol)
+        rsi = calculate_rsi(symbol)
 
-    status = "Neutral"
+        status = "Neutral"
 
-    if rsi is not None:
-        if "bullish" in trend and rsi > 50:
-            status = "Trend confirmed, Strong Bullish Uptrend 📈🔥"
-        elif "bearish" in trend and rsi < 50:
-            status = "Trend confirmed, Strong Bearish Downtrend 📉🔥"
-        else:
-            status = "Trend not confirmed, Weak/Transition Phase ⚠️"
-    if trend is None:
-        await update.message.reply_text("Could not identify trend ❌")
-    else:
-        await update.message.reply_text(f"{symbol.upper()} Trend: {trend}\n"
-                                        f"RSI: {rsi}\n\n"
-                                        f"Status: {status}")
+        if rsi is not None:
+            if "Bullish" in trend and rsi > 50:
+                status = "Trend Confirmed ✅"
+            elif "Bearish" in trend and rsi < 50:
+                status = "Trend Confirmed ✅"
+            else:
+                status = "Weak Trend ⚠️"
+
+        await update.message.reply_text(
+            f"{symbol} Trend: {trend}\n"
+            f"RSI: {rsi}\n"
+            f"Status: {status}"
+        )
+
+        if trend is None:
+            await update.message.reply_text("Could not identify trend ❌")
+            return
+
+    except Exception as e:
+        print("TREND ERROR:", e)
+        await update.message.reply_text(f"Error: {e}")
 
 async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
