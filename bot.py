@@ -222,9 +222,8 @@ def calculate_rsi(symbol, period=14):
         return round(rsi_value, 2)
 
     except Exception as e:
-        print("RSI error:", e)
-        return None             
-    
+        return f"Error: {str(e)}"
+                        
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bot is alive 🚀")
@@ -347,6 +346,8 @@ async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if rsi_value is None:
         await update.message.reply_text("Could not calculate RSI ❌")
+    elif isinstance(rsi_value, str):
+        await update.message.reply_text(rsi_value)
     else:
         await update.message.reply_text(f"{symbol.upper()} 14-day RSI: {rsi_value}")                       
 
