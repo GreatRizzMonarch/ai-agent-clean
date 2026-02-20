@@ -350,12 +350,25 @@ async def trend(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     symbol = context.args[0]
 
-    trend_status = identify_trend(symbol)
+    trend = identify_trend(symbol)
 
-    if trend_status is None:
+    rsi = calculate_rsi(symbol)
+
+    status = "Neutral"
+
+    if rsi is not None:
+        if "bullish" in trend and rsi > 50:
+            status = "Trend confirmed, Strong Bullish Uptrend 📈🔥"
+        elif "bearish" in trend and rsi < 50:
+            status = "Trend confirmed, Strong Bearish Downtrend 📉🔥"
+        else:
+            status = "Trend not confirmed, Weak/Transition Phase ⚠️"
+    if trend is None:
         await update.message.reply_text("Could not identify trend ❌")
     else:
-        await update.message.reply_text(f"{symbol.upper()} Trend: {trend_status}") 
+        await update.message.reply_text(f"{symbol.upper()} Trend: {trend}\n"
+                                        f"RSI: {rsi}\n\n"
+                                        f"Status: {status}")
 
 async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
