@@ -197,6 +197,7 @@ def calculate_rsi(symbol, period=14):
 
         closes = result[0]["indicators"]["quote"][0]["close"]
 
+        closes = [c for c in closes if c is not None]
         df = pd.DataFrame(closes, columns=["close"])
         df.dropna(inplace=True)
 
