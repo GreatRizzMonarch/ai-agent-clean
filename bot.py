@@ -253,13 +253,29 @@ def calculate_rsi(symbol, period=14):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("""Welcome on this bot created by Harsh Raj Gupta.
 This bot delivers data-driven trading signals powered by technical analysis and algorithmic models.
-What you can expect: • Real-time market analysis
+What you can expect: 
+• Real-time market analysis
 • Structured entry, stop-loss & target levels
 • Risk-focused strategy logic
 • No emotional trading
-Before using any signal, understand your risk. Markets are volatile. Trade responsibly.
+Before using any signal, understand your risk.
+Markets are volatile. 
+Trade responsibly.
 Type /help to see available commands
 Bot is alive 🚀""")
+    
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Available commands:\n"
+        "/start - Welcome message\n"
+        "/ping - Check if bot is responsive\n"
+        "/price SYMBOL - Get current price of a stock\n"
+        "/alert SYMBOL TARGET_PRICE - Set price alert\n"
+        "/sma SYMBOL - Get 20-day SMA\n"
+        "/ema SYMBOL [PERIOD] - Get EMA (default 20)\n"
+        "/trend SYMBOL - Identify trend and momentum\n"
+        "/rsi SYMBOL - Get 14-day RSI\n"
+    )
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Pong 🏓")
@@ -413,6 +429,7 @@ def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help))
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("price", price))
     app.add_handler(CommandHandler("alert", alert))
