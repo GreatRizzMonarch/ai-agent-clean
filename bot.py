@@ -547,7 +547,8 @@ async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"{symbol.upper()} 14-day RSI: {rsi_value}") 
 
 async def auto_signal_job(context):
-    symbols = ["SBIN", "TCS", "MRF", "RELIANCE"]  # edit later
+    symbols = ["SBIN", "TCS", "MRF", "RELIANCE", "YESBANK", "IRFC", "LENSKART", "SUZLON", "ETERNAL",
+               "KRN", "TATAINVEST", "SILVERBEES", "HINDCOPPER", "ONGC"]  # edit later
 
     for symbol in symbols:
         result = generate_signal(symbol)
@@ -562,7 +563,7 @@ async def auto_signal_job(context):
             )
 
             await context.bot.send_message(
-                chat_id=YOUR_CHAT_ID,
+                chat_id=7894459956,
                 text=text
             )
 
