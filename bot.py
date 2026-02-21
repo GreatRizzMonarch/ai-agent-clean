@@ -5,6 +5,7 @@ from urllib import response
 import requests
 import sqlite3
 import time
+last_signal = {}
 import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -270,7 +271,41 @@ def calculate_trend_score(symbol):
 
     except Exception as e:
         print("Trend Score Error:", e)
-        return None  
+        return None 
+
+def generate_signal(symbol):
+    data = calculate_trend_score(symbol)
+
+    if data is None:
+        return None
+
+    score = data["score"]
+    bias = data["bias"]
+    rsi = data["rsi"]
+
+    # ===== BUY signal =====
+    if score >= 70 and "Bullish" in bias and rsi < 75:
+        signal = "BUY 🚀"
+
+    # ===== SELL signal =====
+    elif score >= 70 and "Bearish" in bias and rsi > 25:
+        signal = "SELL 🔻"
+
+    else:
+        return None
+
+    # anti-spam check
+    if last_signal.get(symbol) == signal:
+        return None
+
+    last_signal[symbol] = signal
+
+    return {
+        "signal": signal,
+        "score": score,
+        "bias": bias,
+        "rsi": rsi
+    } 
 
 def calculate_rsi(symbol, period=14):
     try:
@@ -509,7 +544,30 @@ async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif isinstance(rsi_value, str):
         await update.message.reply_text(rsi_value)
     else:
-        await update.message.reply_text(f"{symbol.upper()} 14-day RSI: {rsi_value}")                       
+        await update.message.reply_text(f"{symbol.upper()} 14-day RSI: {rsi_value}") 
+
+async def auto_signal_job(context):
+    symbols = ["SBIN", "TCS", "MRF", "RELIANCE"]  # edit later
+
+    for symbol in symbols:
+        result = generate_signal(symbol)
+
+        if result:
+            text = (
+                f"⚡ AUTO SIGNAL\n"
+                f"{symbol}: {result['signal']}\n"
+                f"Score: {result['score']}/100\n"
+                f"Bias: {result['bias']}\n"
+                f"RSI: {result['rsi']}"
+            )
+
+            await context.bot.send_message(
+                chat_id=YOUR_CHAT_ID,
+                text=text
+            )
+
+async def id(update, context):
+    await update.message.reply_text(str(update.effective_chat.id))              
 
 def main():
     if not TOKEN:
@@ -528,9 +586,11 @@ def main():
     app.add_handler(CommandHandler("trend", trend))
     app.add_handler(CommandHandler("rsi", rsi))
     app.add_handler(CommandHandler("score", score))
+    app.add_handler(CommandHandler("id", id))
 
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
+    app.job_queue.run_repeating(auto_signal_job, interval=300, first=10)  # Run every 5 minutes
     print("Bot running...")
     app.run_polling()
 
