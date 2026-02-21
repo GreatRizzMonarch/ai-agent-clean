@@ -1,3 +1,4 @@
+from email.mime import text
 import os
 from turtle import pd
 from urllib import response
@@ -204,6 +205,71 @@ def identify_trend(symbol):
 
     except Exception as e:
         print("Trend error:", e)
+        return None
+
+def calculate_trend_score(symbol):
+    try:
+        price = get_price(symbol)
+        ema20 = calculate_ema(symbol, 20)
+        ema50 = calculate_ema(symbol, 50)
+        rsi = calculate_rsi(symbol)
+
+        if None in (price, ema20, ema50, rsi):
+            return None
+
+        score = 0
+
+        # ---------- 1️⃣ EMA Structure (40 pts) ----------
+        if price > ema20 > ema50:
+            score += 40
+            bias = "Bullish 📈"
+        elif price < ema20 < ema50:
+            score += 40
+            bias = "Bearish 📉"
+        else:
+            score += 20
+            bias = "Sideways 🔄"
+
+        # ---------- 2️⃣ RSI Momentum (30 pts) ----------
+        if 55 <= rsi <= 70:
+            score += 30
+            momentum = "Strong"
+        elif 45 <= rsi < 55 or 70 < rsi <= 80:
+            score += 15
+            momentum = "Moderate"
+        else:
+            momentum = "Weak"
+
+        # ---------- 3️⃣ Distance from EMA20 (20 pts) ----------
+        distance = abs(price - ema20) / ema20 * 100
+
+        if distance > 3:
+            score += 20
+        elif distance > 1:
+            score += 10
+
+        # ---------- 4️⃣ Risk check ----------
+        if rsi > 80:
+            risk = "Overbought ⚠️"
+            score -= 10
+        elif rsi < 20:
+            risk = "Oversold ⚠️"
+            score -= 10
+        else:
+            risk = "Normal"
+
+        score = max(0, min(100, score))
+
+        return {
+            "score": score,
+            "bias": bias,
+            "momentum": momentum,
+            "risk": risk,
+            "rsi": round(rsi, 2)
+        }
+
+    except Exception as e:
+        print("Trend Score Error:", e)
         return None  
 
 def calculate_rsi(symbol, period=14):
@@ -406,6 +472,29 @@ async def trend(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print("TREND ERROR:", e)
         await update.message.reply_text(f"Error: {e}")
 
+async def score(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Usage: /score SYMBOL, e.g. /score SBIN")
+        return
+
+    symbol = context.args[0].upper()
+    result = calculate_trend_score(symbol)
+
+    if result is None:
+        await update.message.reply_text("Could not calculate trend score ❌")
+        return
+
+    await update.message.reply_text(
+        f"📊 {symbol} Trend Score\n"
+        f"Score: {result['score']}/100\n"
+        f"Bias: {result['bias']}\n"
+        f"Momentum: {result['momentum']}\n"
+        f"Risk: {result['risk']}\n"
+        f"RSI: {result['rsi']}"
+    )
+
+    await update.message.reply_text(text)
+
 async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("Usage: /rsi SYMBOL, e.g. /rsi SBIN")
@@ -438,6 +527,7 @@ def main():
     app.add_handler(CommandHandler("ema", ema))
     app.add_handler(CommandHandler("trend", trend))
     app.add_handler(CommandHandler("rsi", rsi))
+    app.add_handler(CommandHandler("score", score))
 
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
