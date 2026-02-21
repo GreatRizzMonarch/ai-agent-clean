@@ -6,6 +6,7 @@ import requests
 import sqlite3
 import time
 last_signal = {}
+last_signal_time = {}
 import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -349,6 +350,69 @@ def calculate_rsi(symbol, period=14):
 
     except Exception as e:
         return f"Error: {str(e)}"
+    
+def generate_auto_signal(symbol):
+    try:
+        # ===== DATA =====
+        price = get_price(symbol)
+        ema20 = calculate_ema(symbol, 20)
+        ema50 = calculate_ema(symbol, 50)
+        rsi = calculate_rsi(symbol)
+        score = calculate_trend_score(symbol)
+
+        if None in (price, ema20, ema50, rsi, score):
+            return None
+
+        # ===== ANALYSIS =====
+        trend = "Sideways"
+
+        if ema20 > ema50:
+            trend = "Bullish"
+        elif ema20 < ema50:
+            trend = "Bearish"
+
+        # ===== SIGNAL LOGIC =====
+        signal = "WAIT"
+
+        if trend == "Bullish" and score >= 70 and rsi < 75:
+            signal = "BUY"
+
+        elif trend == "Bearish" and score >= 70 and rsi > 25:
+            signal = "SELL"
+
+        # ===== FINAL FILTER =====
+        if signal == "WAIT":
+            return None
+
+        return {
+            "symbol": symbol,
+            "signal": signal,
+            "price": price,
+            "trend": trend,
+            "rsi": round(rsi, 2),
+            "score": score
+        }
+
+    except Exception as e:
+        print("Signal error:", e)
+        return None
+    
+import time
+
+def can_send_signal(symbol, cooldown=900):
+    # 900 sec = 15 min
+
+    now = time.time()
+
+    if symbol not in last_signal_time:
+        last_signal_time[symbol] = now
+        return True
+
+    if now - last_signal_time[symbol] > cooldown:
+        last_signal_time[symbol] = now
+        return True
+
+    return False
                         
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -567,6 +631,34 @@ async def auto_signal_job(context):
                 text=text
             )
 
+WATCHLIST = ["SBIN", "TCS", "MRF", "RELIANCE", "YESBANK", "IRFC", "LENSKART", "SUZLON", "ETERNAL",
+             "KRN", "TATAINVEST", "SILVERBEES", "HINDCOPPER", "ONGC"]  # edit later
+
+async def auto_signal_engine(context):
+    bot = context.bot
+
+    for symbol in WATCHLIST:
+
+        if not can_send_signal(symbol):
+            continue
+
+        result = generate_auto_signal(symbol)
+
+        if result is None:
+            continue
+
+        msg = (
+            f"🚨 AUTO SIGNAL 🚨\n"
+            f"{result['symbol']} → {result['signal']}\n"
+            f"Price: ₹{result['price']}\n"
+            f"Trend: {result['trend']}\n"
+            f"Score: {result['score']}/100\n"
+            f"RSI: {result['rsi']}"
+        )
+
+        # replace CHAT_ID with yours
+        await bot.send_message(chat_id=7894459956, text=msg)
+
 async def id(update, context):
     await update.message.reply_text(str(update.effective_chat.id))              
 
@@ -575,6 +667,8 @@ def main():
         raise ValueError("BOT_TOKEN is not set")
 
     app = ApplicationBuilder().token(TOKEN).build()
+
+    print("Auto signal engine Running...🚀🚀🚀")
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help))
@@ -592,6 +686,8 @@ def main():
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
     app.job_queue.run_repeating(auto_signal_job, interval=300, first=10)  # Run every 5 minutes
+    job_queue = app.job_queue
+    job_queue.run_repeating(auto_signal_engine, interval=300, first=10) # Run every 5 minutes
     print("Bot running...")
     app.run_polling()
 
