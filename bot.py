@@ -668,8 +668,6 @@ def main():
 
     app = ApplicationBuilder().token(TOKEN).build()
 
-    print("Auto signal engine Running...🚀🚀🚀")
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help))
     app.add_handler(CommandHandler("ping", ping))
@@ -683,6 +681,7 @@ def main():
     app.add_handler(CommandHandler("score", score))
     app.add_handler(CommandHandler("id", id))
 
+    print("AutoSignal Engine Running...")
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
     app.job_queue.run_repeating(auto_signal_job, interval=300, first=10)  # Run every 5 minutes
