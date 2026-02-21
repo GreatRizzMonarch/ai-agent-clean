@@ -358,7 +358,12 @@ def generate_auto_signal(symbol):
         ema20 = calculate_ema(symbol, 20)
         ema50 = calculate_ema(symbol, 50)
         rsi = calculate_rsi(symbol)
-        score = calculate_trend_score(symbol)
+        score_data = calculate_trend_score(symbol)
+
+        if score_data is None:
+            return None
+
+        score = score_data["score"]
 
         if None in (price, ema20, ema50, rsi, score):
             return None
