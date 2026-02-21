@@ -294,7 +294,7 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"{symbol} price: ₹{current_price}")
 async def alert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) != 2:
-        await update.message.reply_text("Usage: /alert SUZLON 50")
+        await update.message.reply_text("Usage: /alert SYMBOL TARGET_PRICE")
         return
 
     symbol = context.args[0].upper()
@@ -344,7 +344,7 @@ async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def sma(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Usage: /sma SBIN")
+        await update.message.reply_text("Usage: /sma SYMBOL, e.g. /sma SBIN")
         return
 
     symbol = context.args[0].upper()
@@ -357,7 +357,7 @@ async def sma(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ema(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) < 1:
-        await update.message.reply_text("Usage: /ema SBIN 20")
+        await update.message.reply_text("Usage: /ema SYMBOL PERIOD, e.g. /ema SBIN 20")
         return
 
     symbol = context.args[0]
@@ -374,7 +374,7 @@ async def trend(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         if not context.args:
-            await update.message.reply_text("Usage: /trend SBIN")
+            await update.message.reply_text("Usage: /trend SYMBOL, e.g. /trend SBIN")
             return
 
         symbol = context.args[0].upper()
@@ -408,7 +408,7 @@ async def trend(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Usage: /rsi SBIN")
+        await update.message.reply_text("Usage: /rsi SYMBOL, e.g. /rsi SBIN")
         return
 
     symbol = context.args[0]
