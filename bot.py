@@ -251,7 +251,15 @@ def calculate_rsi(symbol, period=14):
                         
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Bot is alive 🚀")
+    await update.message.reply_text("""Welcome on this bot created by Harsh Raj Gupta.
+This bot delivers data-driven trading signals powered by technical analysis and algorithmic models.
+What you can expect: • Real-time market analysis
+• Structured entry, stop-loss & target levels
+• Risk-focused strategy logic
+• No emotional trading
+Before using any signal, understand your risk. Markets are volatile. Trade responsibly.
+Type /help to see available commands
+Bot is alive 🚀""")
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Pong 🏓")
