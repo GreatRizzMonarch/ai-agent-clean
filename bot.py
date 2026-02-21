@@ -185,22 +185,25 @@ def identify_trend(symbol):
         current_price = get_price(symbol)
         rsi_value = calculate_rsi(symbol)
 
-        if None in (ema20, ema50, current_price):
+        # SAFETY CHECK
+        if None in (ema20, ema50, current_price, rsi_value):
             return None
 
+        # TREND LOGIC
         if ema20 > ema50 and rsi_value > 55:
-           trend = "Strong Bullish Uptrend 📈🔥"
+            return "Strong Bullish Uptrend 📈🔥"
 
         elif ema20 < ema50 and rsi_value < 45:
-           trend = "Strong Bearish Downtrend 📉🔥"
+            return "Strong Bearish Downtrend 📉🔥"
 
         elif 45 <= rsi_value <= 55:
-           trend = "Sideways / Low Momentum 🔄"
+            return "Sideways / Low Momentum 🔄"
 
         else:
-          trend = "Weak / Transition Phase ⚠️"
+            return "Weak / Transition Phase ⚠️"
 
-    except:
+    except Exception as e:
+        print("Trend error:", e)
         return None  
 
 def calculate_rsi(symbol, period=14):
