@@ -1,6 +1,8 @@
 from email.mime import text
 import os
 from turtle import pd
+from datetime import datetime
+import pytz
 from urllib import response
 import requests
 import sqlite3
@@ -45,6 +47,21 @@ def fetch_data(url, retries=3):
             time.sleep(1)
 
     return None
+
+def is_market_open():
+    india = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(india)
+
+    #weekend block
+    if now.weekday() >= 5:  # 5 = Saturday, 6 = Sunday
+        return False
+    
+    #NSE timings: 9:15 AM to 3:30 PM IST
+    market_open = now.replace(hour=9, minute=15, second=0, microsecond=0)
+    market_close = now.replace(hour=15, minute=30, second=0, microsecond=0)
+
+    return market_open <= now <= market_close
+
 
 def get_price(symbol: str):
     try:
@@ -642,6 +659,10 @@ WATCHLIST = ["SBIN", "TCS", "MRF", "RELIANCE", "YESBANK", "IRFC", "LENSKART", "S
 async def auto_signal_engine(context):
     bot = context.bot
 
+    if not is_market_open():
+        print("Market is closed. Skipping signal generation.")
+        return
+
     for symbol in WATCHLIST:
 
         if not can_send_signal(symbol):
@@ -691,7 +712,7 @@ def main():
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
     app.job_queue.run_repeating(auto_signal_job, interval=300, first=10)  # Run every 5 minutes
     job_queue = app.job_queue
-    job_queue.run_repeating(auto_signal_engine, interval=300, first=10) # Run every 5 minutes
+    job_queue.run_repeating(auto_signal_engine, interval=600, first=10) # Run every 10 minutes
     print("Bot running...")
     app.run_polling()
 
