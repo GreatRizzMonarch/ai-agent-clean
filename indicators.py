@@ -1,7 +1,7 @@
 import pandas as pd
 import requests
 
-from market import fetch_data, normalize_symbol
+from market import fetch_data
 
 def normalize_symbol(symbol):
     symbol = symbol.upper().replace(".NS", "")
@@ -116,8 +116,6 @@ def calculate_sma(symbol, period = 20):
     
 def calculate_rsi(symbol, period=14):
 
-    symbol = normalize_symbol(symbol)
-
     try:
         
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=6mo&interval=1d"
@@ -158,3 +156,4 @@ def calculate_rsi(symbol, period=14):
 
     except Exception as e:
         return f"Error: {str(e)}"
+
