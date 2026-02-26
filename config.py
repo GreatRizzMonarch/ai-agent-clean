@@ -15,4 +15,4 @@ WATCHLIST = [
 ]
 
 CHAT_ID = "7894459956"
-SIGNAL_INTERVAL = 600  # 10 minutes in seconds
+SIGNAL_INTERVAL = 1200  # 10 minutes in seconds
