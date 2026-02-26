@@ -16,10 +16,9 @@ def fetch_data(url):
         return None
 
 def get_price(symbol):
-
-    print("FETCHING price:", symbol)
     
     symbol = normalize_symbol(symbol)
+    print("FETCHING price:", symbol)
     #yahoo fetch
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&interval=1d"
