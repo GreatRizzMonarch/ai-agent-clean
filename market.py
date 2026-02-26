@@ -7,12 +7,17 @@ def normalize_symbol(symbol):
     return symbol + ".NS"
 
 def fetch_data(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         if response.status_code != 200:
+            print("Bad status:", response.status_code)
             return None
         return response.json()
-    except:
+    except Exception as e:
+        print("Fetch error:", e)
         return None
 
 def get_price(symbol):
