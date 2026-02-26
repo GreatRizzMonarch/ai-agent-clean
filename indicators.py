@@ -113,10 +113,9 @@ def calculate_sma(symbol, period = 20):
 def calculate_rsi(symbol, period=14):
 
     symbol = normalize_symbol(symbol)
-    
-    try:
-        symbol = symbol.upper()
 
+    try:
+        
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=6mo&interval=1d"
         data = fetch_data(url)
         if not data:
