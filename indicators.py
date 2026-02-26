@@ -1,17 +1,14 @@
 import pandas as pd
 import requests
 
-from market import fetch_data
+from market import fetch_data, normalize_symbol
 
-def normalize_symbol(symbol):
-    symbol = symbol.upper().replace(".NS", "")
-    return symbol + ".NS"
 
 def calculate_ema(symbol, period):
     try:
-        symbol = symbol.upper()
+        symbol = normalize_symbol(symbol)
 
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=2y&interval=1d"
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=2y&interval=1d"
 
         headers = {
             "User-Agent": "Mozilla/5.0"
@@ -60,9 +57,9 @@ def calculate_ema(symbol, period):
 
 def calculate_sma(symbol, period = 20):
     try:
-        symbol = symbol.upper()
+        symbol = normalize_symbol(symbol)
 
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=3mo&interval=1d"
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=3mo&interval=1d"
         response = requests.get(
             url,
             headers={"User-Agent": "Mozilla/5.0"},
@@ -117,8 +114,8 @@ def calculate_sma(symbol, period = 20):
 def calculate_rsi(symbol, period=14):
 
     try:
-        
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.NS?range=6mo&interval=1d"
+        symbol = normalize_symbol(symbol)
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=6mo&interval=1d"
         data = fetch_data(url)
         if not data:
             return None

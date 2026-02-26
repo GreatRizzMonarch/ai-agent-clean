@@ -3,11 +3,8 @@ from datetime import datetime
 import pytz
 
 def normalize_symbol(symbol):
-    symbol = symbol.upper()
-
-    if not symbol.endswith(".NS"):
-        symbol += ".NS"
-    return symbol
+    symbol = symbol.upper().replace(".NS", "")
+    return symbol + ".NS"
 
 def fetch_data(url):
     try:

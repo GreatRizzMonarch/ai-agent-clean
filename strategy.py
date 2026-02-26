@@ -1,5 +1,5 @@
-from indicators import calculate_ema, calculate_rsi
-from market import get_price, is_market_open
+import indicators
+from market import get_price, is_market_open, fetch_data
 import time
 
 
@@ -7,17 +7,14 @@ import time
 last_signal = {}
 last_signal_time = {}
 
-def normalize_symbol(symbol):
-    symbol = symbol.upper().replace(".NS", "")
-    return symbol + ".NS"
 
 def identify_trend(symbol):
 
     try:
-        ema20 = calculate_ema(symbol, 20)
-        ema50 = calculate_ema(symbol, 50)
+        ema20 = indicators.calculate_ema(symbol, 20)
+        ema50 = indicators.calculate_ema(symbol, 50)
         current_price = get_price(symbol)
-        rsi_value = calculate_rsi(symbol)
+        rsi_value = indicators.calculate_rsi(symbol)
 
         # SAFETY CHECK
         if None in (ema20, ema50, current_price, rsi_value):
@@ -43,9 +40,9 @@ def identify_trend(symbol):
 def calculate_trend_score(symbol):
     try:
         price = get_price(symbol)
-        ema20 = calculate_ema(symbol, 20)
-        ema50 = calculate_ema(symbol, 50)
-        rsi = calculate_rsi(symbol)
+        ema20 = indicators.calculate_ema(symbol, 20)
+        ema50 = indicators.calculate_ema(symbol, 50)
+        rsi = indicators.calculate_rsi(symbol)
 
         if None in (price, ema20, ema50, rsi):
             return None
@@ -144,9 +141,9 @@ def generate_auto_signal(symbol):
     try:
         # ===== DATA =====
         price = get_price(symbol)
-        ema20 = calculate_ema(symbol, 20)
-        ema50 = calculate_ema(symbol, 50)
-        rsi = calculate_rsi(symbol)
+        ema20 = indicators.calculate_ema(symbol, 20)
+        ema50 = indicators.calculate_ema(symbol, 50)
+        rsi = indicators.calculate_rsi(symbol)
         score_data = calculate_trend_score(symbol)
 
         if score_data is None:
