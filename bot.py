@@ -288,7 +288,7 @@ async def id(update, context):
 def main():
     if not TOKEN:
         raise ValueError("BOT_TOKEN is not set")
-
+    
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -307,7 +307,8 @@ def main():
     print("AutoSignal Engine Running...")
     # Schedule the alert checking function to run every 1 minutes
     app.job_queue.run_repeating(check_alerts, interval=60, first=10)
-    app.job_queue.run_repeating(auto_signal_job, interval=300, first=10)  # Run every 5 minutes
+    app.job_queue.run_repeating(auto_signal_job, interval=300, first=10)  # Run every 5 minutes  
+    job_queue = app.job_queue
     job_queue.run_repeating(auto_signal_job, interval=300)
     job_queue = app.job_queue 
     print("Bot running...")
