@@ -19,16 +19,22 @@ def fetch_data(url):
         return None
 
 def get_price(symbol):
+
+    print("FETCHING price:", symbol)
     
     symbol = normalize_symbol(symbol)
     #yahoo fetch
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&interval=1m"
-        data = requests.get(url, timeout=10).json()
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=1d&interval=1d"
+        
+        data = fetch_data(url)
+        if not data:            
+            print(f"bad status for symbol {symbol}")
+            return None
 
-        result = data['chart']['result']
+        result = data.get("chart", {}).get("result")
         if not result:
-            print(f"No data for {symbol}")
+            print(f"No result for symbol {symbol}")
             return None
         
         closes = result[0]['indicators']['quote'][0]['close']
@@ -36,7 +42,6 @@ def get_price(symbol):
 
         return closes[-1] if closes else None
     
-        print("FETCHING price:", symbol)
     except Exception as e:
         print("Error fetching price:", e)
         return None
