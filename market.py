@@ -2,6 +2,15 @@ import requests
 from datetime import datetime
 import pytz
 
+def fetch_data(url):
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code != 200:
+            return None
+        return response.json()
+    except:
+        return None
+
 def get_price(symbol):
     #yahoo fetch
     try:

@@ -1,7 +1,7 @@
 import pandas as pd
 import requests
 
-from bot import fetch_data
+from market import fetch_data
 
 
 def calculate_ema(symbol, period):
