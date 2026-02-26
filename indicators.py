@@ -1,8 +1,7 @@
 import pandas as pd
 import requests
 
-from market import fetch_data
-
+from market import fetch_data, normalize_symbol
 
 def calculate_ema(symbol, period):
     try:
@@ -112,6 +111,9 @@ def calculate_sma(symbol, period = 20):
         return None
     
 def calculate_rsi(symbol, period=14):
+
+    symbol = normalize_symbol(symbol)
+    
     try:
         symbol = symbol.upper()
 

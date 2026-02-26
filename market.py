@@ -2,6 +2,13 @@ import requests
 from datetime import datetime
 import pytz
 
+def normalize_symbol(symbol):
+    symbol = symbol.upper()
+
+    if not symbol.endswith(".NS"):
+        symbol += ".NS"
+    return symbol
+
 def fetch_data(url):
     try:
         response = requests.get(url, timeout=10)
@@ -27,7 +34,9 @@ def get_price(symbol):
 
         return closes[-1] if closes else None
     
-    except:
+        print("FETCHING:", symbol)
+    except Exception as e:
+        print("Error fetching price:", e)
         return None
 
 

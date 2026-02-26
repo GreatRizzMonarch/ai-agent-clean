@@ -1,5 +1,5 @@
 from indicators import calculate_ema, calculate_rsi
-from market import get_price, is_market_open
+from market import get_price, is_market_open, normalize_symbol
 import time
 
 
@@ -9,6 +9,9 @@ last_signal_time = {}
 
 
 def identify_trend(symbol):
+
+    symbol = normalize_symbol(symbol)
+    
     try:
         ema20 = calculate_ema(symbol, 20)
         ema50 = calculate_ema(symbol, 50)
