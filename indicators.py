@@ -3,6 +3,10 @@ import requests
 
 from market import fetch_data, normalize_symbol
 
+def normalize_symbol(symbol):
+    symbol = symbol.upper().replace(".NS", "")
+    return symbol + ".NS"
+
 def calculate_ema(symbol, period):
     try:
         symbol = symbol.upper()

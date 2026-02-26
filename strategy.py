@@ -7,11 +7,14 @@ import time
 last_signal = {}
 last_signal_time = {}
 
+def normalize_symbol(symbol):
+    symbol = symbol.upper().replace(".NS", "")
+    return symbol + ".NS"
 
 def identify_trend(symbol):
 
     symbol = normalize_symbol(symbol)
-    
+
     try:
         ema20 = calculate_ema(symbol, 20)
         ema50 = calculate_ema(symbol, 50)
