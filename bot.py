@@ -9,12 +9,12 @@ import sqlite3
 import time
 import config
 import market
-from strategy import identify_trend, calculate_trend_score, generate_signal, generate_auto_signal, can_send_signal, predict_target
+import strategy
 from market import get_price, is_market_open
 import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from indicators import calculate_ema, calculate_sma, calculate_rsi
+import indicators
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -152,7 +152,7 @@ async def sma(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     symbol = context.args[0].upper()
-    value = calculate_sma(symbol)
+    value = indicators.calculate_sma(symbol)
 
     if value is None:
         await update.message.reply_text("Could not calculate SMA ❌")
@@ -167,7 +167,7 @@ async def ema(update: Update, context: ContextTypes.DEFAULT_TYPE):
     symbol = context.args[0]
     period = int(context.args[1]) if len(context.args) > 1 else 20
 
-    ema_value = calculate_ema(symbol, period)
+    ema_value = indicators.calculate_ema(symbol, period)
 
     if ema_value is None:
         await update.message.reply_text("Could not calculate EMA ❌")
@@ -183,8 +183,8 @@ async def trend(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         symbol = context.args[0].upper()
 
-        trend = identify_trend(symbol)
-        rsi = calculate_rsi(symbol)
+        trend = strategy.identify_trend(symbol)
+        rsi = indicators.calculate_rsi(symbol)
 
         status = "Neutral"
 
@@ -216,7 +216,7 @@ async def score(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     symbol = context.args[0].upper()
-    result = calculate_trend_score(symbol)
+    result = strategy.calculate_trend_score(symbol)
 
     if result is None:
         await update.message.reply_text("Could not calculate trend score ❌")
@@ -240,7 +240,7 @@ async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     symbol = context.args[0]
 
-    rsi_value = calculate_rsi(symbol)
+    rsi_value = indicators.calculate_rsi(symbol)
 
     if rsi_value is None:
         await update.message.reply_text("Could not calculate RSI ❌")
@@ -262,10 +262,10 @@ async def auto_signal_engine(context):
 
     for symbol in config.WATCHLIST:
 
-        if not can_send_signal(symbol):
+        if not strategy.can_send_signal(symbol):
             continue
 
-        result = generate_auto_signal(symbol)
+        result = strategy.generate_auto_signal(symbol)
 
         if result is None:
             continue
@@ -294,7 +294,7 @@ async def target_command(update, context):
 
     symbol = context.args[0]
 
-    data = predict_target(symbol)
+    data = strategy.predict_target(symbol)
 
     if not data:
         await update.message.reply_text("Could not calculate target ❌")
