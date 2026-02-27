@@ -215,3 +215,23 @@ def predict_target(symbol):
     except Exception as e:
         print("Target prediction error:", e)
         return None
+    
+
+# ===============================
+# SIGNAL COOLDOWN CHECKER
+# ===============================
+def can_send_signal(symbol, cooldown=600):
+
+    import time
+
+    now = time.time()
+
+    if symbol not in last_signal_time:
+        last_signal_time[symbol] = now
+        return True
+
+    if now - last_signal_time[symbol] > cooldown:
+        last_signal_time[symbol] = now
+        return True
+
+    return False
