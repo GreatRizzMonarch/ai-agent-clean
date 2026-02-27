@@ -61,3 +61,21 @@ def is_market_open():
     market_close = now.replace(hour=15, minute=30, second=0, microsecond=0)
 
     return market_open <= now <= market_close
+
+def get_candles(symbol, range="3mo", interval="1d"):
+    symbol = normalize_symbol(symbol)
+
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range={range}&interval={interval}"
+
+    data = fetch_data(url)
+    if not data:
+        return None
+
+    result = data.get("chart", {}).get("result")
+    if not result:
+        return None
+
+    closes = result[0]["indicators"]["quote"][0]["close"]
+    closes = [c for c in closes if c is not None]
+
+    return closes

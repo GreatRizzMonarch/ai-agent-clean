@@ -1,26 +1,42 @@
-import indicators
-from market import get_price, is_market_open, fetch_data
 import time
 
+from market import get_price, get_candles, is_market_open
+from indicators import (
+    calculate_ema_from_data,
+    calculate_rsi_from_data,
+    calculate_targets,
+)
 
-# Initialize global dictionaries for signal tracking
+# ===============================
+# Signal tracking (anti spam)
+# ===============================
 last_signal = {}
 last_signal_time = {}
 
+SIGNAL_COOLDOWN = 600   # 10 min
 
+
+# ===============================
+# TREND IDENTIFIER
+# ===============================
 def identify_trend(symbol):
 
     try:
-        ema20 = indicators.calculate_ema(symbol, 20)
-        ema50 = indicators.calculate_ema(symbol, 50)
-        current_price = get_price(symbol)
-        rsi_value = indicators.calculate_rsi(symbol)
+        closes = get_candles(symbol)
 
-        # SAFETY CHECK
-        if None in (ema20, ema50, current_price, rsi_value):
+        if not closes:
             return None
 
-        # TREND LOGIC
+        ema20 = calculate_ema_from_data(closes, 20)
+        ema50 = calculate_ema_from_data(closes, 50)
+        rsi_value = calculate_rsi_from_data(closes)
+        current_price = get_price(symbol)
+
+        # safety check
+        if None in (ema20, ema50, rsi_value, current_price):
+            return None
+
+        # trend logic
         if ema20 > ema50 and rsi_value > 55:
             return "Strong Bullish Uptrend 📈🔥"
 
@@ -28,177 +44,174 @@ def identify_trend(symbol):
             return "Strong Bearish Downtrend 📉🔥"
 
         elif 45 <= rsi_value <= 55:
-            return "Sideways / Low Momentum 🔄"
+            return "Sideways / Low Momentum 🟨"
 
         else:
-            return "Weak / Transition Phase ⚠️"
+            return "Neutral"
 
     except Exception as e:
         print("Trend error:", e)
         return None
-    
-def calculate_trend_score(symbol):
-    try:
-        price = get_price(symbol)
-        ema20 = indicators.calculate_ema(symbol, 20)
-        ema50 = indicators.calculate_ema(symbol, 50)
-        rsi = indicators.calculate_rsi(symbol)
 
-        if None in (price, ema20, ema50, rsi):
+
+# ===============================
+# TREND SCORE (0–100)
+# ===============================
+def calculate_trend_score(symbol):
+
+    try:
+        closes = get_candles(symbol)
+
+        if not closes:
             return None
 
-        score = 0
+        ema20 = calculate_ema_from_data(closes, 20)
+        ema50 = calculate_ema_from_data(closes, 50)
+        rsi = calculate_rsi_from_data(closes)
+        price = get_price(symbol)
 
-        # ---------- 1️⃣ EMA Structure (40 pts) ----------
-        if price > ema20 > ema50:
-            score += 40
-            bias = "Bullish 📈"
-        elif price < ema20 < ema50:
-            score += 40
-            bias = "Bearish 📉"
-        else:
+        if None in (ema20, ema50, rsi, price):
+            return None
+
+        score = 50
+
+        # EMA strength
+        if ema20 > ema50:
             score += 20
-            bias = "Sideways 🔄"
+        else:
+            score -= 20
 
-        # ---------- 2️⃣ RSI Momentum (30 pts) ----------
-        if 55 <= rsi <= 70:
-            score += 30
-            momentum = "Strong"
-        elif 45 <= rsi < 55 or 70 < rsi <= 80:
+        # price vs ema20
+        if price > ema20:
             score += 15
-            momentum = "Moderate"
         else:
-            momentum = "Weak"
+            score -= 15
 
-        # ---------- 3️⃣ Distance from EMA20 (20 pts) ----------
-        distance = abs(price - ema20) / ema20 * 100
-
-        if distance > 3:
-            score += 20
-        elif distance > 1:
-            score += 10
-
-        # ---------- 4️⃣ Risk check ----------
-        if rsi > 80:
-            risk = "Overbought ⚠️"
-            score -= 10
-        elif rsi < 20:
-            risk = "Oversold ⚠️"
-            score -= 10
-        else:
-            risk = "Normal"
+        # RSI strength
+        if rsi > 60:
+            score += 15
+        elif rsi < 40:
+            score -= 15
 
         score = max(0, min(100, score))
 
-        return {
-            "score": score,
-            "bias": bias,
-            "momentum": momentum,
-            "risk": risk,
-            "rsi": round(rsi, 2)
-        }
+        return score
 
     except Exception as e:
-        print("Trend Score Error:", e)
+        print("Score error:", e)
         return None
-    
+
+
+# ===============================
+# AUTO SIGNAL GENERATOR
+# ===============================
 def generate_signal(symbol):
-    data = calculate_trend_score(symbol)
 
-    if data is None:
-        return None
-
-    score = data["score"]
-    bias = data["bias"]
-    rsi = data["rsi"]
-
-    # ===== BUY signal =====
-    if score >= 70 and "Bullish" in bias and rsi < 75:
-        signal = "BUY 🚀"
-
-    # ===== SELL signal =====
-    elif score >= 70 and "Bearish" in bias and rsi > 25:
-        signal = "SELL 🔻"
-
-    else:
-        return None
-
-    # anti-spam check
-    if last_signal.get(symbol) == signal:
-        return None
-
-    last_signal[symbol] = signal
-
-    return {
-        "signal": signal,
-        "score": score,
-        "bias": bias,
-        "rsi": rsi
-    } 
-
-    
-def generate_auto_signal(symbol):
     try:
-        # ===== DATA =====
+        closes = get_candles(symbol)
+
+        if not closes:
+            return None
+
+        ema20 = calculate_ema_from_data(closes, 20)
+        ema50 = calculate_ema_from_data(closes, 50)
+        rsi = calculate_rsi_from_data(closes)
         price = get_price(symbol)
-        ema20 = indicators.calculate_ema(symbol, 20)
-        ema50 = indicators.calculate_ema(symbol, 50)
-        rsi = indicators.calculate_rsi(symbol)
-        score_data = calculate_trend_score(symbol)
 
-        if score_data is None:
+        if None in (ema20, ema50, rsi, price):
             return None
 
-        score = score_data["score"]
+        score = calculate_trend_score(symbol)
 
-        if None in (price, ema20, ema50, rsi, score):
+        if score is None:
             return None
 
-        # ===== ANALYSIS =====
-        trend = "Sideways"
+        signal = None
+        bias = "Neutral"
 
-        if ema20 > ema50:
-            trend = "Bullish"
-        elif ema20 < ema50:
-            trend = "Bearish"
-
-        # ===== SIGNAL LOGIC =====
-        signal = "WAIT"
-
-        if trend == "Bullish" and score >= 70 and rsi < 75:
+        # BUY logic
+        if ema20 > ema50 and rsi > 55 and price > ema20:
             signal = "BUY"
+            bias = "Bullish"
 
-        elif trend == "Bearish" and score >= 70 and rsi > 25:
+        # SELL logic
+        elif ema20 < ema50 and rsi < 45 and price < ema20:
             signal = "SELL"
+            bias = "Bearish"
 
-        # ===== FINAL FILTER =====
-        if signal == "WAIT":
+        if not signal:
             return None
 
         return {
-            "symbol": symbol,
             "signal": signal,
-            "price": price,
-            "trend": trend,
-            "rsi": round(rsi, 2),
-            "score": score
+            "bias": bias,
+            "price": round(price, 2),
+            "score": score,
+            "rsi": rsi,
         }
 
     except Exception as e:
         print("Signal error:", e)
         return None
-    
-def can_send_signal(symbol, cooldown=900):
-    # 900 sec = 15 min
+
+
+# ===============================
+# AUTO SIGNAL ENGINE
+# ===============================
+def generate_auto_signal(symbol):
+
+    if not is_market_open():
+        return None
 
     now = time.time()
 
-    if symbol not in last_signal_time:
-        last_signal_time[symbol] = now
-        return True
+    result = generate_signal(symbol)
 
-    if now - last_signal_time[symbol] > cooldown:
-        last_signal_time[symbol] = now
-        return True
+    if not result:
+        return None
 
-    return False
+    # anti spam logic
+    last = last_signal.get(symbol)
+    last_time = last_signal_time.get(symbol, 0)
+
+    if last == result["signal"] and (now - last_time) < SIGNAL_COOLDOWN:
+        return None
+
+    last_signal[symbol] = result["signal"]
+    last_signal_time[symbol] = now
+
+    return result
+
+# ===============================
+# TARGET PREDICTOR
+# ===============================
+def predict_target(symbol):
+
+    try:
+        closes = get_candles(symbol)
+
+        if not closes:
+            return None
+
+        trend = identify_trend(symbol)
+        price = get_price(symbol)
+
+        if trend is None or price is None:
+            return None
+
+        targets = calculate_targets(closes, trend, price)
+
+        if not targets:
+            return None
+
+        return {
+            "price": round(price, 2),
+            "trend": trend,
+            "target1": targets["target1"],
+            "target2": targets["target2"],
+            "stoploss": targets["stoploss"]
+        }
+
+    except Exception as e:
+        print("Target prediction error:", e)
+        return None

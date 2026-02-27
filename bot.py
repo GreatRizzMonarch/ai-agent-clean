@@ -9,7 +9,7 @@ import sqlite3
 import time
 import config
 import market
-from strategy import identify_trend, calculate_trend_score, generate_signal, generate_auto_signal, can_send_signal
+from strategy import identify_trend, calculate_trend_score, generate_signal, generate_auto_signal, can_send_signal, predict_target
 from market import get_price, is_market_open
 import pandas as pd
 from telegram import Update
@@ -283,7 +283,34 @@ async def auto_signal_engine(context):
         await bot.send_message(chat_id=7894459956, text=msg)
 
 async def id(update, context):
-    await update.message.reply_text(str(update.effective_chat.id))              
+    await update.message.reply_text(str(update.effective_chat.id)) 
+
+
+async def target_command(update, context):
+
+    if not context.args:
+        await update.message.reply_text("Usage: /target SBIN")
+        return
+
+    symbol = context.args[0]
+
+    data = predict_target(symbol)
+
+    if not data:
+        await update.message.reply_text("Could not calculate target ❌")
+        return
+
+    msg = (
+        f"🎯 TARGET ANALYSIS\n"
+        f"{symbol.upper()}\n\n"
+        f"Price: ₹{data['price']}\n"
+        f"Trend: {data['trend']}\n"
+        f"Target 1: ₹{data['target1']}\n"
+        f"Target 2: ₹{data['target2']}\n"
+        f"Stoploss: ₹{data['stoploss']}"
+    )
+
+    await update.message.reply_text(msg)             
 
 def main():
     if not TOKEN:
@@ -303,6 +330,7 @@ def main():
     app.add_handler(CommandHandler("rsi", rsi))
     app.add_handler(CommandHandler("score", score))
     app.add_handler(CommandHandler("id", id))
+    app.add_handler(CommandHandler("target", target_command))
 
     print("AutoSignal Engine Running...")
     # Schedule the alert checking function to run every 1 minutes
