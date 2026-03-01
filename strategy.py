@@ -62,7 +62,7 @@ def calculate_trend_score(symbol):
     try:
         closes = get_candles(symbol)
 
-        if not closes:
+        if closes is None or len(closes) == 0:
             return None
 
         ema20 = calculate_ema_from_data(closes, 20)
@@ -95,7 +95,7 @@ def calculate_trend_score(symbol):
 
         score = max(0, min(100, score))
 
-        return score
+        return {"score": score, "trend": identify_trend(symbol), "rsi": rsi, "price": price}
 
     except Exception as e:
         print("Score error:", e)
