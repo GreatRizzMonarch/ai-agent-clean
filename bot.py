@@ -224,14 +224,13 @@ async def score(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         f"📊 {symbol} Trend Score\n"
-        f"Score: {result['score']}/100\n"
-        f"Bias: {result['bias']}\n"
-        f"Momentum: {result['momentum']}\n"
-        f"Risk: {result['risk']}\n"
-        f"RSI: {result['rsi']}"
+        f"Score: {result.get('score', 'N/A')}/100\n"
+        f"Bias: {result.get('bias', 'N/A')}\n"
+        f"Momentum: {result.get('momentum', 'N/A')}\n"
+        f"Risk: {result.get('risk', 'N/A')}\n"
+        f"RSI: {result.get('rsi', 'N/A')}"
     )
 
-    await update.message.reply_text(text)
 
 async def rsi(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:

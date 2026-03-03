@@ -41,7 +41,7 @@ def calculate_ema(symbol, period=20):
     try:
         symbol = market.normalize_symbol(symbol)
 
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=6mo&interval=1d"
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=2y&interval=1d"
         data = market.fetch_data(url)
 
         if not data:
