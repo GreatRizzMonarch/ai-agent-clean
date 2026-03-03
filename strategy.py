@@ -115,10 +115,22 @@ def calculate_trend_score(symbol):
             momentum = "weak"
         else:
             momentum = "neutral"
+
+        # risk level based on score
+        volatility = abs(ema20 - ema50) / price
+
+        if volatility > 0.05:
+            risk = "high"
+        elif volatility > 0.02:
+            risk = "moderate"
+        else:
+            risk = "low"
+
         return {"score": score, 
                 "trend": identify_trend(symbol),
                 "bias": bias,
                 "momentum": momentum,
+                "risk": risk,
                 "rsi": rsi, 
                 "price": price}
 
