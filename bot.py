@@ -227,7 +227,7 @@ async def score(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Score: {result['score']}/100\n"
         f"Bias: {result['bias']}\n"
         f"Momentum: {result['momentum']}\n"
-        f"Risk: {result['risk', "N/A"]}\n"
+        f"Risk: {result['risk']}\n"
         f"RSI: {result['rsi']}"
     )
 
