@@ -1,5 +1,5 @@
 import pandas as pd
-
+import market
 
 # =========================
 # SMA
@@ -35,7 +35,43 @@ def calculate_ema_from_data(closes, period=20):
     except Exception as e:
         print("EMA error:", e)
         return None
+    
 
+
+
+
+import pandas as pd
+from market import fetch_data, normalize_symbol
+
+def calculate_sma(symbol, period=20):
+    try:
+        symbol = market.normalize_symbol(symbol)
+
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=6mo&interval=1d"
+        data = market.fetch_data(url)
+
+        if not data:
+            return None
+
+        result = data.get("chart", {}).get("result")
+        if not result:
+            return None
+
+        closes = result[0]["indicators"]["quote"][0]["close"]
+
+        df = pd.DataFrame(closes, columns=["close"])
+        df.dropna(inplace=True)
+
+        if len(df) < period:
+            return None
+
+        sma = df["close"].rolling(window=period).mean().iloc[-1]
+
+        return round(float(sma), 2)
+
+    except Exception as e:
+        print("SMA error:", e)
+        return None
 
 # =========================
 # RSI
@@ -74,11 +110,11 @@ def calculate_rsi(symbol, period=14):
     try:
         from market import fetch_data, normalize_symbol
 
-        symbol = normalize_symbol(symbol)
+        symbol = market.normalize_symbol(symbol)
 
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=2y&interval=1d"
 
-        data = fetch_data(url)
+        data = market.fetch_data(url)
         if not data:
             return None
 
