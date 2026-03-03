@@ -95,7 +95,21 @@ def calculate_trend_score(symbol):
 
         score = max(0, min(100, score))
 
-        return {"score": score, "trend": identify_trend(symbol), "rsi": rsi, "price": price}
+        if score >= 70:
+            bias = "strong bullish"
+        elif score >= 55:
+            bias = "bullish"
+        elif score <= 30:
+            bias = "strong bearish"
+        elif score <= 45:
+            bias = "bearish"
+        else:
+            bias = "neutral"
+        return {"score": score, 
+                "trend": identify_trend(symbol),
+                "bias": bias,
+                "rsi": rsi, 
+                "price": price}
 
     except Exception as e:
         print("Score error:", e)
