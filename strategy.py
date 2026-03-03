@@ -105,9 +105,20 @@ def calculate_trend_score(symbol):
             bias = "bearish"
         else:
             bias = "neutral"
+
+        # Momentum logic based on RSI
+        if rsi > 65:
+            momentum = "high"
+        elif rsi > 55:
+            momentum = "moderate"
+        elif rsi < 40:
+            momentum = "weak"
+        else:
+            momentum = "neutral"
         return {"score": score, 
                 "trend": identify_trend(symbol),
                 "bias": bias,
+                "momentum": momentum,
                 "rsi": rsi, 
                 "price": price}
 
